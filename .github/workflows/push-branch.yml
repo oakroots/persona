@@ -1,0 +1,66 @@
+name: ci
+on:
+  push:
+    branches-ignore:
+      - master
+  pull_request:
+    branches-ignore:
+      - master
+
+  workflow_dispatch:
+
+env:
+  APPLICATION: persona
+  GH_TOKEN_BOT: ${{ secrets.GH_TOKEN_BOT }}
+  GH_ACTIONS_USER: ${{ secrets.GH_ACTIONS_USER }}
+
+concurrency:
+  group: ${{ github.ref_name }}
+  cancel-in-progress: true
+
+jobs:
+  tests:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Setup context
+        uses: oakroots/setup-context@v1
+        with:
+          path: oakroots-actions
+
+      - name: Checkout Repository
+        uses: actions/checkout@v5
+        with:
+          repository: '${{ github.repository }}'
+          token: ${{ secrets.GH_TOKEN_BOT }}
+          path: ${{ github.repository }}
+          fetch-depth: 0
+
+      - name: Run tests
+        uses: ./oakroots-actions/go-library-test
+        with:
+          working-directory: ${{ github.repository }}
+
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v5
+        with:
+          repository: ${{ github.repository }}
+          token: ${{ secrets.GH_TOKEN_BOT }}
+          path: ${{ github.repository }}
+          fetch-depth: 0
+
+      - name: Setup Context
+        uses: oakroots/setup-context@v1
+        with:
+          path: oakroots-actions
+
+      - name: Run Go Mod Tidy
+        run: go mod tidy
+        working-directory: ${{ github.repository }}
+
+      - name: Run Linter
+        uses: ./oakroots-actions/go-lint
+        with:
+          working-directory: ${{ github.repository }}
