@@ -1,0 +1,55 @@
+name: Realese, sonar scan
+on:
+  release:
+    types: [published]
+  push:
+    tags:
+      - 'v*'
+
+permissions:
+  contents: read
+  pull-requests: write
+  id-token: write
+
+concurrency:
+  group: sonar-${{ githyb.ref }}
+  cancel-in-progress: true
+
+jobs:
+  sonar:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Setup Context
+        uses: oakroots/setup-context@v1
+        with:
+          path: oakroots-actions
+
+      - name: Checkout repository
+        uses: actions/checkout@v5
+        with:
+          repository: '${{ github.repository }}'
+          token: ${{ secrets.GH_TOKEN_BOT }}
+          path: ${{ github.repository }}
+          fetch-depth: 0
+
+      - name: Test with coverage
+        uses: ./oakroots-actions/go-library-test
+        with:
+          coverage: true
+
+      - name: Upload coverage artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage
+          path: coverage.out
+
+      - name: SonarQube Scan
+        uses: SonarSource/sonarqube-scan-action@v6
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+
+      - name: Quality Gate
+        uses: SonarSource/sonarqube-quality-gate-action@v1.2.0
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
