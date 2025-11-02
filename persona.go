@@ -83,17 +83,3 @@ func (g *Generator) Seed() uint32 {
 
 	return g.seed
 }
-
-//func (g *Generator) Deterministic() bool {
-//	g.mu.Lock()
-//	defer g.mu.Unlock()
-//
-//	return g.deterministic
-//}
-//
-//func (g *Generator) Gender() Gender {
-//	g.mu.Lock()
-//	defer g.mu.Unlock()
-//
-//	return g.gender
-//}

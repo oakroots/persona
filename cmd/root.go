@@ -14,6 +14,7 @@ var rootCmd = &cobra.Command{
 		var opts []persona.Option
 		if seed != 0 {
 			opts = append(opts, persona.WithSeed(seed), persona.WithDeterministic())
+			deterministic = true
 		} else if deterministic {
 			opts = append(opts, persona.WithDeterministic())
 		}
