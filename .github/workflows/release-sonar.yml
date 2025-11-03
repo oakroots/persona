@@ -3,8 +3,8 @@ on:
   release:
     types: [published]
   push:
-    tags:
-      - 'v*'
+    branches:
+      - master
 
 env:
   APPLICATION: persona
