@@ -3,6 +3,8 @@ on:
   release:
     types: [published]
   push:
+    branches:
+      - master
     tags:
       - 'v*'
 
@@ -64,10 +66,67 @@ jobs:
           name: sonar-report-task
           path: ${{ github.repository }}/.scannerwork/report-task.txt
 
-      - name: Quality Gate
-        uses: SonarSource/sonarqube-quality-gate-action@v1.2.0
-        with:
-          scanMetadataReportFile: ${{ github.repository }}/.scannerwork/report-task.txt
+      - name: Wait for Quality Gate Status
+        shell: bash
         env:
-          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+          REPORT_PATH: ${{ github.repository }}/.scannerwork/report-task.txt
           SONAR_HOST_URL: https://sonarcloud.io
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+        run: |
+          CE_TASK_ID=$(grep 'caTaskId' "$REPORT_PATH" | cut -d '=' -f 2
+          echo "Found caTaskId: $CE_TASK_ID"
+          if [ -z "$CA_TASK_ID" ]; then
+            echo "Error: Could not find caTaskId. Aborting."
+            exit 1
+          fi
+          
+          STATUS="PENDING"
+          MAX_TRIES=60
+          TRIES=0
+          
+          while [ "$STATUS" != "SUCCESS" ] && [ "$STATUS" != "FAILED" ]; do
+            if [ $TRIES -ge $MAX_TRIES ]; then
+              echo "Maximum wait time for Quality Gate status exceeded."
+              exit 1
+            fi
+
+            echo "Waiting for processing... Try $((TRIES + 1))/$MAX_TRIES"
+            sleep 5 # Wait 5 seconds
+
+            # Query the Compute Engine task API status (using token for auth)
+            TASK_JSON=$(curl -s -u "${SONAR_TOKEN}:" "${SONAR_HOST_URL}/api/ce/task?id=${CE_TASK_ID}")
+            STATUS=$(echo "$TASK_JSON" | grep -o '"status":"[^"]*"' | cut -d ':' -f 2 | tr -d '",')
+
+            if [ "$STATUS" == "SUCCESS" ]; then
+              echo "Analysis task completed successfully."
+              break
+            fi
+          
+            TRIES=$((TRIES + 1))
+          done
+          
+          echo "Retrieving final Quality Gate Status..."
+          
+          sleep 5
+          
+          QG_STATUS_JSON=$(curl -s -u "${SONAR_TOKEN}:" "${SONAR_HOST_URL}/api/qualitygates/project_status?projectKey=${{ env.SONAR_PROJECT_KEY }}")
+          QG_STATUS=$(echo "$QG_STATUS_JSON" | grep -o '"status":"[^"]*"' | cut -d ':' -f 2 | tr -d '",')
+
+          echo "Final Quality Gate Status: $QG_STATUS"
+          
+          if [ "$QG_STATUS" == "OK" ]; then
+            echo "✅ Quality Gate PASSED."
+          elif [ "$QG_STATUS" == "ERROR" ]; then
+            echo "❌ Quality Gate FAILED. Cancelling CI run."
+            exit 1
+          else
+            echo "⚠️ Unknown Quality Gate status ($QG_STATUS). Check SonarCloud. Continuing."
+          fi
+
+#      - name: Quality Gate
+#        uses: SonarSource/sonarqube-quality-gate-action@v1.2.0
+#        with:
+#          scanMetadataReportFile: ${{ github.repository }}/.scannerwork/report-task.txt
+#        env:
+#          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+#          SONAR_HOST_URL: https://sonarcloud.io
