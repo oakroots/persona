@@ -1,4 +1,4 @@
-name: Realese, sonar scan
+name: Release, sonar scan
 on:
   release:
     types: [published]
@@ -25,12 +25,12 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Setup Context
+      - name: Setup context
         uses: oakroots/setup-context@v1
         with:
           path: oakroots-actions
 
-      - name: Checkout repository
+      - name: Checkout Repository
         uses: actions/checkout@v5
         with:
           repository: '${{ github.repository }}'
@@ -38,7 +38,7 @@ jobs:
           path: ${{ github.repository }}
           fetch-depth: 0
 
-      - name: Test with coverage
+      - name: Run tests
         uses: ./oakroots-actions/go-library-test
         with:
           working-directory: ${{ github.repository }}
@@ -48,14 +48,26 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: coverage
-          path: coverage.out
+          path: ${{ github.repository }}/coverage.out
 
       - name: SonarQube Scan
         uses: SonarSource/sonarqube-scan-action@v6
+        with:
+          projectBaseDir: ${{ github.repository }}
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+          SONAR_HOST_URL: https://sonarcloud.io
+
+      - name: Upload SonarQube Report Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: sonar-report-task
+          path: ${{ github.repository }}/.scannerwork/report-task.txt
 
       - name: Quality Gate
         uses: SonarSource/sonarqube-quality-gate-action@v1.2.0
+        with:
+          scanMetadataReportFile: ${{ github.repository }}/.scannerwork/report-task.txt
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+          SONAR_HOST_URL: https://sonarcloud.io
