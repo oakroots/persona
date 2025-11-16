@@ -17,7 +17,6 @@ or as a Go library that you can integrate directly into your own applications.
 
 - Deterministic name generation using a 25-bit Linear Feedback Shift Register (LFSR)
 - Optional seed for reproducible sequences
-- Multiple formatting styles (plain, capitalized, spaced, etc.)
 - Built-in datasets for male, female, and fantasy names
 - CLI tool (`persona`) for quick name generation from the terminal
 - No external dependencies for the core library
@@ -62,7 +61,7 @@ persona --gender f
 persona --gender u
 
 # Generate a deterministic sequence based on a seed
-persona --seed 12345 --count 5
+persona --seed 12345 --num 5
 
 # Use a specific output format
 persona --format capitalized-space
@@ -85,19 +84,26 @@ import (
 
 func main() {
 	// Simple random name
-	fmt.Println(persona.RandomName(persona.DefaultFormatter))
+	p := persona.New()
+
+	fmt.Println(p.GetFullName())
 
 	// Deterministic name from a specific seed
-	next, name := persona.PseudoRandomName(12345, false, persona.CapitalizedSpaceFormatter{})
-	fmt.Printf("Seed: %d, Name: %s\n", next, name)
+	p = persona.New(
+		persona.WithSeed(12345),
+		persona.WithDeterministic(),
+	)
+
+	for i := 0; i < 5; i++ {
+		fmt.Printf("%s\n", p.GetFullName())
+	}
 
 	// Using gender filtering
-	opts := []persona.Option{
+	p = persona.New(
 		persona.WithGender(persona.Female),
-		persona.WithFormatter(persona.CapitalizedSpaceFormatter{}),
-	}
-	gen := persona.NewGenerator(opts...)
-	fmt.Println(gen.Next())
+	)
+
+	fmt.Println(p.GetFullName())
 }
 ```
 
@@ -135,12 +141,13 @@ If you find a bug or have an idea for improvement, open an issue or submit a PR.
 ## 🏷 Example output
 
 ```bash
-$ persona --count 5
-Alandra Miren
-Jareth Korrin
-Thalina Veyra
-Kaelen Durn
-Riven Talar
+$ persona --seed 12345 --num 5
+Rell Dawnchaser
+Fenra Starglen
+Ren Starborne
+Quen Duskbloom
+Arin Windhollow
+7045132
 ```
 
 ---
