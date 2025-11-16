@@ -1,5 +1,13 @@
 # persona
 
+[![Go Reference](https://pkg.go.dev/badge/github.com/oakroots/persona.svg)](https://pkg.go.dev/github.com/oakroots/persona)
+[![Go Report Card](https://goreportcard.com/badge/github.com/oakroots/persona)](https://goreportcard.com/report/github.com/oakroots/persona)
+[![SonarCloud](https://sonarcloud.io/api/project_badges/measure?project=oakroots_persona&metric=alert_status)](https://sonarcloud.io/summary/new_code?id=oakroots_persona)
+[![Coverage](https://sonarcloud.io/api/project_badges/measure?project=oakroots_persona&metric=coverage)](https://sonarcloud.io/summary/new_code?id=oakroots_persona)
+[![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
+[![Version](https://img.shields.io/github/v/tag/oakroots/persona?label=version)](https://github.com/oakroots/persona/releases)
+
+
 **persona** is a Go library and command-line tool created out of a simple need —  
 for another project, I wanted a way to generate both fantasy-style names and authentic Polish ones.  
 Most existing solutions focused only on English names or lacked flexibility,  
@@ -62,9 +70,6 @@ persona --gender u
 
 # Generate a deterministic sequence based on a seed
 persona --seed 12345 --num 5
-
-# Use a specific output format
-persona --format capitalized-space
 ```
 
 ---
